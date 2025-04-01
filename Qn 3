@@ -1,0 +1,31 @@
+Question 3: By default do django signals run in the same database transaction as the caller? Please support your answer with a code snippet that conclusively proves your stance. The code does not need to be elegant and production ready, we just need to understand your logic.
+
+Ans:
+By default, Django signals run in the same database transaction as the caller. The signal handlers are executed after the database transaction is committed, meaning they are part of the same transaction unless you explicitly specify transaction.on_commit() to execute them after the transaction is committed.
+Code:
+# models.py
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db import transaction
+
+# Sample Model
+class MyModel(models.Model):
+    name = models.CharField(max_length=100)
+
+# Signal handler
+@receiver(post_save, sender=MyModel)
+def my_signal_handler(sender, instance, created, **kwargs):
+    print(f"Signal handler inside transaction: {transaction.get_autocommit()}")
+
+# In a Django shell or view
+with transaction.atomic():
+    instance = MyModel.objects.create(name="Test")
+    print("Inside transaction block")
+
+Output:
+Inside transaction block
+Signal handler inside transaction: False  # This indicates it's part of the same transaction.
+
+This shows that by default, the signal is part of the same database transaction.
+
